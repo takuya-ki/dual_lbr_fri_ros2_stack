@@ -40,39 +40,50 @@ def hidden_setup(context: LaunchContext) -> List[LaunchDescriptionEntity]:
                 move_group_params,
                 {"use_sim_time": use_sim_time},
             ],
-            # namespace=robot_name,
+            namespace=robot_name,
         )
     )
 
-    # RViz
-    ld.add_action(
-        RVizMixin.node_rviz(
-            rviz_cfg_pkg=f"{model}_moveit_config",
-            rviz_cfg="config/moveit.rviz",
-            parameters=LBRMoveGroupMixin.params_rviz(
-                moveit_configs=moveit_configs_builder.to_moveit_configs()
-            )
-            + [{"use_sim_time": use_sim_time}],
-            remappings=[
-                # ("display_planned_path", PathJoinSubstitution([robot_name, "display_planned_path"])),
-                # ("joint_states", PathJoinSubstitution([robot_name, "joint_states"])),
-                # ("monitored_planning_scene", PathJoinSubstitution([robot_name, "monitored_planning_scene"])),
-                # ("planning_scene", PathJoinSubstitution([robot_name, "planning_scene"])),
-                # ("robot_description", PathJoinSubstitution([robot_name, "robot_description"])),
-                # ("robot_description_semantic", PathJoinSubstitution([robot_name, "robot_description_semantic"])),
-                # ("recognized_object_array", PathJoinSubstitution([robot_name, "recognized_object_array"])),
-                ("display_planned_path", PathJoinSubstitution(["display_planned_path"])),
-                ("joint_states", PathJoinSubstitution(["joint_states"])),
-                ("monitored_planning_scene", PathJoinSubstitution(["monitored_planning_scene"])),
-                ("planning_scene", PathJoinSubstitution(["planning_scene"])),
-                ("robot_description", PathJoinSubstitution(["robot_description"])),
-                ("robot_description_semantic", PathJoinSubstitution(["robot_description_semantic"])),
-                ("recognized_object_array", PathJoinSubstitution(["recognized_object_array"])),
-            ],
-            condition=IfCondition(LaunchConfiguration("rviz")),
+    # RViz if desired
+    rviz = RVizMixin.node_rviz(
+        rviz_cfg_pkg=f"{model}_moveit_config",
+        rviz_cfg="config/moveit.rviz",
+        parameters=LBRMoveGroupMixin.params_rviz(
+            moveit_configs=moveit_configs_builder.to_moveit_configs()
         )
+        + [{"use_sim_time": use_sim_time}],
+        remappings=[
+            (
+                "display_planned_path",
+                PathJoinSubstitution([robot_name, "display_planned_path"]),
+            ),
+            ("joint_states", PathJoinSubstitution([robot_name, "joint_states"])),
+            (
+                "monitored_planning_scene",
+                PathJoinSubstitution([robot_name, "monitored_planning_scene"]),
+            ),
+            ("planning_scene", PathJoinSubstitution([robot_name, "planning_scene"])),
+            (
+                "planning_scene_world",
+                PathJoinSubstitution([robot_name, "planning_scene_world"]),
+            ),
+            (
+                "robot_description",
+                PathJoinSubstitution([robot_name, "robot_description"]),
+            ),
+            (
+                "robot_description_semantic",
+                PathJoinSubstitution([robot_name, "robot_description_semantic"]),
+            ),
+            (
+                "recognized_object_array",
+                PathJoinSubstitution([robot_name, "recognized_object_array"]),
+            ),
+        ],
+        condition=IfCondition(LaunchConfiguration("rviz")),
     )
 
+    ld.add_action(rviz)
     return ld.entities
 
 

@@ -4,34 +4,50 @@
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("hello_moveit");
 
-  // Configure node
-  auto node_ptr = rclcpp::Node::make_shared("hello_moveit");
-  node_ptr->declare_parameter("robot_name", "lbr");
-  auto robot_name = node_ptr->get_parameter("robot_name").as_string();
+  moveit::planning_interface::MoveGroupInterface right_group(
+      node,
+      moveit::planning_interface::MoveGroupInterface::Options(
+          "lbr_right",                 // planning group
+          "robot_description",         // shared description
+          "lbr_right"                  // namespace
+      ));
 
-  // Create MoveGroupInterface (lives inside robot_name namespace)
-  auto move_group_interface = moveit::planning_interface::MoveGroupInterface(
-      node_ptr, moveit::planning_interface::MoveGroupInterface::Options("arm", "robot_description",
-                                                                        robot_name));
+  geometry_msgs::msg::Pose right_pose;
+  right_pose.orientation.w = 1.0;
+  right_pose.position.x = 0.4;
+  right_pose.position.y = -0.3;
+  right_pose.position.z = 0.9;
+  right_group.setPoseTarget(right_pose);
 
-  // Set a target pose
-  geometry_msgs::msg::Pose target_pose;
-  target_pose.orientation.w = 1.0;
-  target_pose.position.x = -0.4;
-  target_pose.position.y = 0.0;
-  target_pose.position.z = 0.9;
-  move_group_interface.setPoseTarget(target_pose);
-
-  // Create a plan to that target pose
-  moveit::planning_interface::MoveGroupInterface::Plan plan;
-  auto error_code = move_group_interface.plan(plan);
-
-  if (error_code == moveit::core::MoveItErrorCode::SUCCESS) {
-    // Execute the plan
-    move_group_interface.execute(plan);
+  moveit::planning_interface::MoveGroupInterface::Plan right_plan;
+  if (right_group.plan(right_plan) == moveit::core::MoveItErrorCode::SUCCESS) {
+    right_group.execute(right_plan);
   } else {
-    RCLCPP_ERROR(node_ptr->get_logger(), "Failed to plan to target pose");
+    RCLCPP_ERROR(node->get_logger(), "Right arm planning failed");
+  }
+
+  moveit::planning_interface::MoveGroupInterface left_group(
+      node,
+      moveit::planning_interface::MoveGroupInterface::Options(
+          "lbr_left",                  // planning group
+          "robot_description",         // shared description
+          "lbr_left"                   // namespace
+      ));
+
+  geometry_msgs::msg::Pose left_pose;
+  left_pose.orientation.w = 1.0;
+  left_pose.position.x = -0.4;
+  left_pose.position.y = 0.3;
+  left_pose.position.z = 0.9;
+  left_group.setPoseTarget(left_pose);
+
+  moveit::planning_interface::MoveGroupInterface::Plan left_plan;
+  if (left_group.plan(left_plan) == moveit::core::MoveItErrorCode::SUCCESS) {
+    left_group.execute(left_plan);
+  } else {
+    RCLCPP_ERROR(node->get_logger(), "Left arm planning failed");
   }
 
   rclcpp::shutdown();

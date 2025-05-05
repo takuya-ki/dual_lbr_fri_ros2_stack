@@ -43,7 +43,8 @@ def generate_launch_description() -> LaunchDescription:
         robot_name="",
         remappings=[
             ("~/robot_description", "robot_description"),
-            ("/joint_states", "/lbr/joint_states")],
+            # ("/joint_states", "/lbr/joint_states")
+        ],
     )
     ld.add_action(robot_state_publisher)
 
@@ -56,7 +57,8 @@ def generate_launch_description() -> LaunchDescription:
         ctrl_cfg_path="ros2_control/lbr_common_controllers.yaml",
         remappings=[
             ("~/robot_description", "robot_description"),
-            ("/joint_states", "/lbr/joint_states")],
+            # ("/joint_states", "/lbr/joint_states")
+        ],
     )
     ld.add_action(common_ros2_control_node)
     right_ros2_control_node = LBRROS2ControlMixin.node_ros2_control(
