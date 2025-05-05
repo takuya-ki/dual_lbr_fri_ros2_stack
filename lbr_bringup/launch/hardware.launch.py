@@ -13,10 +13,12 @@ def generate_launch_description() -> LaunchDescription:
     ld.add_action(LBRDescriptionMixin.arg_model())
     ld.add_action(LBRDescriptionMixin.arg_robot_name())
     ld.add_action(LBRROS2ControlMixin.arg_sys_cfg_pkg())
-    ld.add_action(LBRROS2ControlMixin.arg_sys_cfg())
+    ld.add_action(LBRROS2ControlMixin.arg_right_sys_cfg())
+    ld.add_action(LBRROS2ControlMixin.arg_left_sys_cfg())
     ld.add_action(LBRROS2ControlMixin.arg_ctrl_cfg_pkg())
     ld.add_action(LBRROS2ControlMixin.arg_ctrl_cfg())
-    ld.add_action(LBRROS2ControlMixin.arg_ctrl())
+    ld.add_action(LBRROS2ControlMixin.arg_right_ctrl())
+    ld.add_action(LBRROS2ControlMixin.arg_left_ctrl())
 
     # static transform world -> <robot_name>_floating_link
     ld.add_action(
@@ -45,27 +47,43 @@ def generate_launch_description() -> LaunchDescription:
     ld.add_action(ros2_control_node)
 
     # joint state broad caster and controller on ros2 control node start
-    joint_state_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
-        controller="joint_state_broadcaster"
+    right_joint_state_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
+        controller="right_joint_state_broadcaster"
     )
-    force_torque_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
-        controller="force_torque_broadcaster"
+    right_force_torque_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
+        controller="right_force_torque_broadcaster"
     )
-    lbr_state_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
-        controller="lbr_state_broadcaster"
+    lbr_right_state_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
+        controller="lbr_right_state_broadcaster"
     )
-    controller = LBRROS2ControlMixin.node_controller_spawner(
-        controller=LaunchConfiguration("ctrl")
+    right_controller = LBRROS2ControlMixin.node_controller_spawner(
+        controller=LaunchConfiguration("right_ctrl")
+    )
+    left_joint_state_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
+        controller="left_joint_state_broadcaster"
+    )
+    left_force_torque_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
+        controller="left_force_torque_broadcaster"
+    )
+    lbr_left_state_broadcaster = LBRROS2ControlMixin.node_controller_spawner(
+        controller="lbr_left_state_broadcaster"
+    )
+    left_controller = LBRROS2ControlMixin.node_controller_spawner(
+        controller=LaunchConfiguration("left_ctrl")
     )
 
     controller_event_handler = RegisterEventHandler(
         OnProcessStart(
             target_action=ros2_control_node,
             on_start=[
-                joint_state_broadcaster,
-                force_torque_broadcaster,
-                lbr_state_broadcaster,
-                controller,
+                right_joint_state_broadcaster,
+                right_force_torque_broadcaster,
+                lbr_right_state_broadcaster,
+                right_controller,
+                left_joint_state_broadcaster,
+                left_force_torque_broadcaster,
+                lbr_left_state_broadcaster,
+                left_controller,
             ],
         )
     )

@@ -18,7 +18,7 @@ class LBRDescriptionMixin:
             "model", default="iiwa7"
         ),
         robot_name: Optional[Union[LaunchConfiguration, str]] = LaunchConfiguration(
-            "robot_name", default="lbr"
+            "robot_name", default=""
         ),
         mode: Optional[Union[LaunchConfiguration, bool]] = LaunchConfiguration(
             "mode", default="mock"
@@ -31,7 +31,10 @@ class LBRDescriptionMixin:
                     LaunchConfiguration("sys_cfg_pkg", default="lbr_description")
                 ),
                 LaunchConfiguration(
-                    "sys_cfg", default="ros2_control/lbr_system_config.yaml"
+                    "lbr_right_sys_cfg", default="ros2_control/lbr_right_system_config.yaml"
+                ),
+                LaunchConfiguration(
+                    "lbr_left_sys_cfg", default="ros2_control/lbr_left_system_config.yaml"
                 ),
             ]
         ),
@@ -67,7 +70,7 @@ class LBRDescriptionMixin:
             name="model",
             default_value=default_value,
             description="The LBR model in use.",
-            choices=["iiwa7", "iiwa14", "med7", "med14"],
+            choices=["iiwa7", "iiwa14", "dual_iiwa14", "med7", "med14"],
         )
 
     @staticmethod

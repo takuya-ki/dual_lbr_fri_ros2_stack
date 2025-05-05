@@ -3,7 +3,7 @@ lbr_demos
 All demos build on :ref:`lbr_ros2_control`. Different ``ros2_controllers`` are loaded to command the robot.
 
 .. note::
-    Some demos require a real robot. Make sure you followed :doc:`Hardware Setup <../../lbr_fri_ros2_stack/doc/hardware_setup>` first.
+    Some demos require a real robot. Make sure you followed :doc:`Hardware Setup <../../dual_lbr_fri_ros2_stack/doc/hardware_setup>` first.
 
 .. warning::
     On the real robot, do always execute in ``T1`` mode first.

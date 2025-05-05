@@ -24,19 +24,53 @@ class LBRROS2ControlMixin:
         )
 
     @staticmethod
-    def arg_ctrl() -> DeclareLaunchArgument:
+    def arg_lbr_common_ctrl() -> DeclareLaunchArgument:
         return DeclareLaunchArgument(
-            name="ctrl",
+            name="lbr_ctrl",
             default_value="joint_trajectory_controller",
-            description="Desired default controller. One of specified in ctrl_cfg.",
+            description="Desired default controller for the right arm. One of specified in ctrl_cfg.",
             choices=[
-                "admittance_controller",
-                "joint_trajectory_controller",
-                "forward_position_controller",
-                "lbr_joint_position_command_controller",
-                "lbr_torque_command_controller",
-                "lbr_wrench_command_controller",
-                "twist_controller",
+                "right_admittance_controller",
+                "right_joint_trajectory_controller",
+                "right_forward_position_controller",
+                "lbr_right_joint_position_command_controller",
+                "lbr_right_torque_command_controller",
+                "lbr_right_wrench_command_controller",
+                "right_twist_controller",
+            ],
+        )
+
+    @staticmethod
+    def arg_lbr_right_ctrl() -> DeclareLaunchArgument:
+        return DeclareLaunchArgument(
+            name="lbr_right_ctrl",
+            default_value="right_joint_trajectory_controller",
+            description="Desired default controller for the right arm. One of specified in ctrl_cfg.",
+            choices=[
+                "right_admittance_controller",
+                "right_joint_trajectory_controller",
+                "right_forward_position_controller",
+                "lbr_right_joint_position_command_controller",
+                "lbr_right_torque_command_controller",
+                "lbr_right_wrench_command_controller",
+                "right_twist_controller",
+            ],
+        )
+
+    @staticmethod
+    def arg_lbr_left_ctrl() -> DeclareLaunchArgument:
+        return DeclareLaunchArgument(
+            name="lbr_left_ctrl",
+            default_value="left_joint_trajectory_controller",
+            description="Desired default controller for the left arm. One of specified in ctrl_cfg.",
+            choices=[
+                "left_admittance_controller",
+                "left_joint_trajectory_controller",
+                "left_forward_position_controller",
+                "lbr_left_joint_position_command_controller",
+                "lbr_left_torque_command_controller",
+                "lbr_left_wrench_command_controller",
+                "left_twist_controller",
             ],
         )
 
@@ -49,11 +83,19 @@ class LBRROS2ControlMixin:
         )
 
     @staticmethod
-    def arg_sys_cfg() -> DeclareLaunchArgument:
+    def arg_lbr_right_sys_cfg() -> DeclareLaunchArgument:
         return DeclareLaunchArgument(
-            name="sys_cfg",
-            default_value="ros2_control/lbr_system_config.yaml",
-            description="The relative path from sys_cfg_pkg to the lbr_system_config.yaml file.",
+            name="lbr_right_sys_cfg",
+            default_value="ros2_control/lbr_right_system_config.yaml",
+            description="The relative path from sys_cfg_pkg to the lbr_right_system_config.yaml file.",
+        )
+
+    @staticmethod
+    def arg_lbr_left_sys_cfg() -> DeclareLaunchArgument:
+        return DeclareLaunchArgument(
+            name="lbr_left_sys_cfg",
+            default_value="ros2_control/lbr_left_system_config.yaml",
+            description="The relative path from sys_cfg_pkg to the lbr_right_system_config.yaml file.",
         )
 
     @staticmethod
@@ -71,6 +113,12 @@ class LBRROS2ControlMixin:
         ),
         use_sim_time: Optional[Union[LaunchConfiguration, bool]] = LaunchConfiguration(
             "use_sim_time", default="false"
+        ),
+        ctrl_cfg_name: Optional[Union[LaunchConfiguration, bool]] = LaunchConfiguration(
+            "ctrl_cfg_name", default="ctrl_cfg"
+        ),
+        ctrl_cfg_path: Optional[Union[LaunchConfiguration, bool]] = LaunchConfiguration(
+            "ctrl_cfg_path", default="ros2_control/lbr_controllers.yaml"
         ),
         robot_description: Optional[
             Dict[str, str]
@@ -90,16 +138,16 @@ class LBRROS2ControlMixin:
                             )
                         ),
                         LaunchConfiguration(
-                            "ctrl_cfg", default="ros2_control/lbr_controllers.yaml"
+                            ctrl_cfg_name, default=ctrl_cfg_path
                         ),
                     ]
                 ),
                 robot_description,
             ],
             namespace=robot_name,
-            remappings=[
-                ("~/robot_description", "robot_description"),
-            ],
+            # remappings=[
+            #     ("~/robot_description", "robot_description"),
+            # ],
             **kwargs,
         )
 
