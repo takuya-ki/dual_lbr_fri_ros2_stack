@@ -28,7 +28,7 @@ def generate_launch_description() -> LaunchDescription:
     # robot description
     robot_description = LBRDescriptionMixin.param_robot_description(mode="mock")
 
-    # robot_state_publisher（/lbr/joint_states を購読）
+    # robot_state_publisher (/lbr/joint_states)
     robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -41,7 +41,7 @@ def generate_launch_description() -> LaunchDescription:
     )
     ld.add_action(robot_state_publisher)
 
-    # joint_state_publisher_gui（/lbr/joint_states を発行）
+    # joint_state_publisher_gui (/lbr/joint_states)
     joint_state_publisher_gui = Node(
         package="joint_state_publisher_gui",
         executable="joint_state_publisher_gui",
