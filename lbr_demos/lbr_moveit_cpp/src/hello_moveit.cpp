@@ -1,68 +1,144 @@
-#include <rclcpp/rclcpp.hpp>
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <geometry_msgs/msg/pose.hpp>
-#include <thread>
+#include <memory>
+#include <string>
+#include <future>
+#include <iostream>
 
-int main(int argc, char **argv)
-{
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
+
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/msg/quaternion.hpp"
+#include "moveit_msgs/action/move_group.hpp"
+#include "moveit_msgs/msg/constraints.hpp"
+#include "moveit_msgs/msg/position_constraint.hpp"
+#include "moveit_msgs/msg/orientation_constraint.hpp"
+#include "shape_msgs/msg/solid_primitive.hpp"
+#include "moveit_msgs/msg/bounding_volume.hpp"
+#include "std_msgs/msg/header.hpp"
+
+using namespace std::placeholders;
+using moveit_msgs::action::MoveGroup;
+
+class MoveGroupActionClientNode : public rclcpp::Node {
+public:
+  using GoalHandleMoveGroup = rclcpp_action::ClientGoalHandle<MoveGroup>;
+
+  MoveGroupActionClientNode(const std::string & node_name)
+  : Node(node_name) {
+    action_client_ = rclcpp_action::create_client<MoveGroup>(
+      this, "/move_action");
+
+    RCLCPP_INFO(this->get_logger(), "Waiting for action server /move_action...");
+    if (!action_client_->wait_for_action_server(std::chrono::seconds(5))) {
+      throw std::runtime_error("Couldn't connect to action server /move_action.");
+    }
+    RCLCPP_INFO(this->get_logger(), "Connected to action server.");
+  }
+
+  void send_goal_async(
+    const geometry_msgs::msg::Pose & target,
+    const std::string & move_group_name,
+    const std::string & base,
+    const std::string & end_effector,
+    std::function<void(GoalHandleMoveGroup::WrappedResult)> done_callback)
+  {
+    auto goal_msg = MoveGroup::Goal();
+    goal_msg.request.allowed_planning_time = 1.0;
+    goal_msg.request.group_name = move_group_name;
+    goal_msg.request.max_acceleration_scaling_factor = 0.1;
+    goal_msg.request.max_velocity_scaling_factor = 0.1;
+    goal_msg.request.num_planning_attempts = 1;
+
+    moveit_msgs::msg::Constraints constraint;
+    moveit_msgs::msg::PositionConstraint pc;
+    moveit_msgs::msg::OrientationConstraint oc;
+
+    std_msgs::msg::Header header;
+    header.frame_id = base;
+
+    shape_msgs::msg::SolidPrimitive primitive;
+    primitive.type = shape_msgs::msg::SolidPrimitive::SPHERE;
+    primitive.dimensions = {0.0001};
+
+    moveit_msgs::msg::BoundingVolume bounding_volume;
+    bounding_volume.primitives.push_back(primitive);
+    bounding_volume.primitive_poses.push_back(target);
+
+    pc.header = header;
+    pc.link_name = end_effector;
+    pc.constraint_region = bounding_volume;
+    pc.weight = 1.0;
+
+    oc.header = header;
+    oc.link_name = end_effector;
+    oc.orientation = target.orientation;
+    oc.absolute_x_axis_tolerance = 0.001;
+    oc.absolute_y_axis_tolerance = 0.001;
+    oc.absolute_z_axis_tolerance = 0.001;
+    oc.weight = 1.0;
+
+    constraint.position_constraints.push_back(pc);
+    constraint.orientation_constraints.push_back(oc);
+
+    goal_msg.request.goal_constraints.push_back(constraint);
+
+    auto send_goal_options = rclcpp_action::Client<MoveGroup>::SendGoalOptions();
+    send_goal_options.result_callback = [done_callback](const GoalHandleMoveGroup::WrappedResult & result) {
+      done_callback(result);
+    };
+
+    action_client_->async_send_goal(goal_msg, send_goal_options);
+  }
+
+private:
+  rclcpp_action::Client<MoveGroup>::SharedPtr action_client_;
+};
+
+std::string result_code_to_string(rclcpp_action::ResultCode code) {
+  switch (code) {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      return "SUCCEEDED";
+    case rclcpp_action::ResultCode::ABORTED:
+      return "ABORTED";
+    case rclcpp_action::ResultCode::CANCELED:
+      return "CANCELED";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+int main(int argc, char ** argv) {
   rclcpp::init(argc, argv);
+  auto node = std::make_shared<MoveGroupActionClientNode>("hello_moveit_cpp");
 
-  rclcpp::NodeOptions options;
-  options.allow_undeclared_parameters(true);
-  options.automatically_declare_parameters_from_overrides(true);
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = 0.0;
+  pose.position.y = 0.0;
+  pose.position.z = 1.0;
+  pose.orientation.x = 0.0;
+  pose.orientation.y = 0.0;
+  pose.orientation.z = 0.0;
+  pose.orientation.w = 1.0;
 
-  auto node = rclcpp::Node::make_shared("hello_moveit", options);
+  bool right_done = false;
+  bool left_done = false;
 
-  // 🔽 use_sim_time を明示的に宣言（例外が出ても安全にスキップ）
-  try {
-    node->declare_parameter("use_sim_time", false);
-  } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException & e) {
-    RCLCPP_WARN(node->get_logger(), "use_sim_time already declared, skipping");
-  }
+  node->send_goal_async(pose, "lbr_right", "lbr_right_link_0", "lbr_right_link_ee",
+    [&right_done](rclcpp_action::ClientGoalHandle<MoveGroup>::WrappedResult result) {
+      std::cout << "Right goal result received. Status: " << result_code_to_string(result.code) << std::endl;
+      right_done = true;
+    });
+  
+  node->send_goal_async(pose, "lbr_left", "lbr_left_link_0", "lbr_left_link_ee",
+    [&left_done](rclcpp_action::ClientGoalHandle<MoveGroup>::WrappedResult result) {
+      std::cout << "Left goal result received. Status: " << result_code_to_string(result.code) << std::endl;
+      left_done = true;
+    });
 
-  RCLCPP_INFO(node->get_logger(), "Creating MoveGroupInterface for lbr_left");
-
-  moveit::planning_interface::MoveGroupInterface left_group(
-    node,
-    moveit::planning_interface::MoveGroupInterface::Options(
-      "lbr_left", "robot_description", "")
-  );
-
-  RCLCPP_INFO(node->get_logger(), "Waiting for current state...");
-  std::this_thread::sleep_for(std::chrono::seconds(3));
-
-  auto current_state = left_group.getCurrentState(10.0);
-  if (!current_state)
-  {
-    RCLCPP_ERROR(node->get_logger(), "Current state NOT available");
-    rclcpp::shutdown();
-    return 1;
-  }
-
-  RCLCPP_INFO(node->get_logger(), "Current state received");
-
-  left_group.setStartStateToCurrentState();
-  left_group.setPlanningTime(10.0);
-  left_group.setMaxVelocityScalingFactor(1.0);
-  left_group.setMaxAccelerationScalingFactor(1.0);
-  left_group.setPlannerId("RRTConnect");
-
-  geometry_msgs::msg::Pose target_pose;
-  target_pose.orientation.w = 1.0;
-  target_pose.position.x = 0.4;
-  target_pose.position.y = 0.0;
-  target_pose.position.z = 0.6;
-  left_group.setPoseTarget(target_pose, "lbr_left_link_ee");
-
-  moveit::planning_interface::MoveGroupInterface::Plan plan;
-  if (left_group.plan(plan) == moveit::core::MoveItErrorCode::SUCCESS)
-  {
-    RCLCPP_INFO(node->get_logger(), "Plan success, executing...");
-    left_group.execute(plan);
-  }
-  else
-  {
-    RCLCPP_ERROR(node->get_logger(), "Left arm planning failed");
+  // Spin until both are done
+  while (!(right_done && left_done)) {
+    rclcpp::spin_some(node);
   }
 
   rclcpp::shutdown();
