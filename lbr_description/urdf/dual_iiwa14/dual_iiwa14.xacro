@@ -236,13 +236,13 @@
     </link>
 
     <joint name="workspace_mount_right_joint" type="fixed">
-        <origin xyz="0.1 0.5 0.85" rpy="0 0 3.14"/>
+        <origin xyz="-0.5 0.5 0.85" rpy="0 0 3.14"/>
         <parent link="lbr_right_floating_link"/>
         <child link="workspace_mount_right"/>
     </joint>
 
     <joint name="lbr_right_joint" type="fixed">
-        <origin xyz="0 0 0.016" rpy="0 0 2.36"/>
+        <origin xyz="0 0 0.016" rpy="0 0 0.785398"/>
         <parent link="workspace_mount_right" />
         <child link="lbr_right_link_0" />
     </joint>
@@ -275,13 +275,13 @@
     </link>
 
     <joint name="workspace_mount_left_joint" type="fixed">
-        <origin xyz="-0.5 0.5 0.85" rpy="0 0 3.14"/>
+        <origin xyz="0.1 0.5 0.85" rpy="0 0 3.14"/>
         <parent link="lbr_left_floating_link"/>
         <child link="workspace_mount_left"/>
     </joint>
 
     <joint name="lbr_left_joint" type="fixed">
-        <origin xyz="0 0 0.016" rpy="0 0 0.785398"/>
+        <origin xyz="0 0 0.016" rpy="0 0 2.36"/>
         <parent link="workspace_mount_left" />
         <child link="lbr_left_link_0" />
     </joint>

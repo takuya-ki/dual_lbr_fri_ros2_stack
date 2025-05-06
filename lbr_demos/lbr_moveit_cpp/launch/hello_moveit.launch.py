@@ -21,13 +21,15 @@ def hidden_setup(context: LaunchContext) -> List[LaunchDescriptionEntity]:
     moveit_configs = LBRMoveGroupMixin.moveit_configs_builder(
         robot_name=model,
         package_name=f"{model}_moveit_config",
-    )
+    ).to_moveit_configs()
 
     # launch demo node
     ld.add_action(
         Node(
             package="lbr_moveit_cpp",
             executable="hello_moveit",
+            name="hello_moveit",
+            output='screen',
             parameters=[
                 moveit_configs.to_dict(),
                 {"use_sim_time": use_sim_time},
